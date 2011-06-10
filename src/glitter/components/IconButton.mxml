@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Button xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		  xmlns:s="library://ns.adobe.com/flex/spark" 
+		  xmlns:mx="library://ns.adobe.com/flex/mx"
+		  skinClass="glitter.skin.IconButtonSkin">
+	<fx:Script>
+		<![CDATA[
+			protected var p_icon:Object;
+			
+			[Bindable]
+			public function get icon():Object
+			{
+				return this.p_icon;
+			}
+			
+			public function set icon(value:Object):void
+			{
+				this.p_icon = value;
+			}
+		]]>
+	</fx:Script>
+</s:Button>

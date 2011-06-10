@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:ItemRenderer xmlns:fx="http://ns.adobe.com/mxml/2009" 
+					xmlns:s="library://ns.adobe.com/flex/spark" 
+					xmlns:mx="library://ns.adobe.com/flex/mx"
+					xmlns:ns="library://ns.adobe.com/flashx/textLayout"
+					autoDrawBackground="false"
+					height.hovered="100"
+					height.selected="100"
+					height="48"
+					>
+
+	<fx:Script>
+		<![CDATA[
+			import com.swfjunkie.tweetr.data.objects.StatusData;
+			
+			import mx.events.FlexEvent;
+			
+			[Bindable] private var tweet:StatusData;
+			[Bindable] private var tweetUser:String;
+			[Bindable] private var tweetUserImage:String;
+			[Bindable] private var tweetText:String;
+			
+			override public function set data(value:Object):void
+			{
+				super.data = value;
+				if(!value || !(value is StatusData)) {
+					tweetUser = "";
+					tweetUserImage = "";
+					tweetText= "";
+				}
+				else {
+					tweet = value as StatusData;
+					tweetUser = tweet.user.screenName;
+					tweetUserImage = tweet.user.profileImageUrl;
+					tweetText= tweet.text;
+				}
+			}
+		]]>
+	</fx:Script>
+	
+	<s:states>
+		<s:State name="normal"/>
+		<s:State name="hovered" stateGroups="highlight"/>
+		<s:State name="selected" stateGroups="highlight"/>
+	</s:states>
+	
+	<s:transitions>
+		<s:Transition fromState="*" toState="hovered">
+			<s:Resize targets="{[this,img]}"/>
+		</s:Transition>
+	</s:transitions>
+	
+	<s:Rect width="100%" height="100%">
+		<s:fill.highlight>
+			<s:SolidColor alpha=".5" color.hovered="#444444" color.selected="#555555"/>
+		</s:fill.highlight>
+	</s:Rect>	
+	<s:HGroup width="100%" height="100%" verticalAlign="middle" gap="3">							
+		<mx:Image id="img" source="{tweetUserImage}" height="48" width="48" width.highlight="68" height.highlight="68"/>
+		<s:RichText maxWidth="410" maxWidth.highlight="390" fontSize.highlight="16">
+			<s:span fontWeight="bold">{tweetUser}</s:span><s:br/><s:span>{tweetText}</s:span>
+		</s:RichText>
+	</s:HGroup>
+	<s:Line width="100%" bottom="0">
+		<s:stroke>
+			<s:SolidColorStroke weight="1" color="#bbbbbb" alpha=".2"/>
+		</s:stroke>
+	</s:Line>
+</s:ItemRenderer>

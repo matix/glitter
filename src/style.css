@@ -1,0 +1,63 @@
+/* CSS file */
+@namespace s "library://ns.adobe.com/flex/spark";
+@namespace mx "library://ns.adobe.com/flex/mx";
+
+@font-face
+{
+	font-family: DefaultFont;
+	embed-as-cff: true;
+	src: url('./assets/Ubuntu-R.ttf');
+}
+
+@font-face
+{
+	font-family: DefaultFont;
+	font-weight: bold;	
+	embed-as-cff: true;
+	src: url('./assets/Ubuntu-B.ttf');
+}
+
+global
+{
+	color: #ffffff;
+	chrome-color: #1F5372;
+	content-background-color: #333333;
+	font-family: DefaultFont;
+	focus-color: #FF8C00;
+	accent-color: #FF8C00;
+	item-selection-color: #FF8C00;
+	item-roll-over-color: #FF8C00;
+}
+
+s|WindowedApplication
+{
+	background-color: #222222;
+}
+
+mx|ToolTip
+{
+	font-family: "Verdana";
+	background-color: #222222;
+}
+
+mx|Alert
+{
+	font-family: "Verdana";
+	background-color: #222222;
+	content-background-color: #222222;
+}
+
+.closeButton
+{
+	chrome-color: #880000
+}
+
+.title
+{
+	font-size:20;
+}
+
+.user
+{
+	font-size:20;
+}

@@ -1,0 +1,250 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:WindowedApplication xmlns:fx="http://ns.adobe.com/mxml/2009" 
+					   xmlns:s="library://ns.adobe.com/flex/spark" 
+					   xmlns:mx="library://ns.adobe.com/flex/mx" 
+					   xmlns:ns="library://ns.adobe.com/flashx/textLayout"
+					   xmlns:glitter="glitter.*"
+					   xmlns:components="glitter.components.*"
+					   showStatusBar="false"
+					   applicationComplete="initApplication(event)"
+					   currentState="login" 
+					   width="500"
+					   height="700"
+					   skinClass="glitter.skin.ApplicationChromeSkin" 
+					   > 
+	
+	<fx:Style source="style.css"/>
+	
+	<fx:Declarations>
+		<glitter:Twitter id="twitter" ready="onTwitterReady(event)" error="onTwitterError(event)" authError="onAuthError(event)"/>
+		<mx:StringValidator id="tweetValidator"
+							source="{tweetInput}" property="text" maxLength="140" minLength="1" 
+							tooLongError="A tweet can't be longer than 140 charecters!"
+							tooShortError="You must enter a tweet..."
+							requiredFieldError="You must enter a tweet..."
+							triggerEvent="change"/>
+	</fx:Declarations>
+	
+	<s:states>
+		<s:State name="login"/>
+		<s:State name="timeline"/>
+		<s:State name="profile"/>
+	</s:states>
+	
+	<s:VGroup top="5" left="5" right="5" bottom="5">
+		
+		<s:HGroup width="100%">
+			<s:RichText width="100%" styleName="title" text="Glitter"/>
+			<mx:Spacer width="100%"/>
+			<mx:ColorPicker id="chromeColor" change="changeChromeColor(event)"/>
+			<components:IconButton excludeFrom="login" icon="@Embed('./assets/timeline.png')" width="30" height="20" label="timeline" click="getTimeline()" id="timelineButton"/>
+			<components:IconButton excludeFrom="login" icon="@Embed('./assets/profile.png')" width="30" height="20" label="profile" click="getProfile()" id="profileButton"/>
+			<components:IconButton label="close" styleName="closeButton" 
+								   click="stage.nativeWindow.close()" width="20" height="20"
+								   icon="@Embed('./assets/close.png')"/>
+		</s:HGroup>
+		
+		<s:VGroup includeIn="login" width="100%" height="100%">
+			<s:RichText id="loginText" width="100%" verticalCenter="0">
+				Login to Twitter to use the application...
+			</s:RichText>
+		</s:VGroup>
+		
+		<s:VGroup id="ui" excludeFrom="login" width="100%" height="100%" horizontalCenter="0" verticalCenter="0">
+			<s:HGroup width="100%" height="50">
+				<s:Group width="100%" height="100%">
+					<s:TextArea id="tweetInput" width="100%" height="100%"/>
+					<s:RichText right="5" bottom="5" alpha=".5" fontSize="16" fontWeight="bold" text="{140 - tweetInput.text.length}"/>
+				</s:Group>
+				<components:IconButton label="Tweet!" width="50" height="50" icon="@Embed('./assets/twitter.png')" click="onTweetClick(event)" id="tweetButton"/>
+			</s:HGroup>
+			<s:List id="tweetList" width="100%" height="100%" itemRenderer="glitter.components.Tweet">
+				<s:scroller>
+					<s:Scroller horizontalScrollPolicy="off"/>
+				</s:scroller>
+			</s:List>
+			<s:HGroup width="100%" height="48" verticalAlign="middle">
+				<mx:Image id="userImage" width="48" height="48" autoLoad="true"/>
+				<s:RichText styleName="user" width="100%">
+					<s:span id="userScreenName"></s:span> (<s:span id="userName" color="#bbbbbb"></s:span>)
+				</s:RichText>
+			</s:HGroup>
+		</s:VGroup>
+	</s:VGroup>
+	
+	<s:Group id="loaderScreen" width="80" height="80"  verticalCenter="0" horizontalCenter="0" visible="false">
+		<s:showEffect>
+			<s:Parallel target="{loaderScreen}" >
+				<s:Move yBy="20" />				
+				<s:Fade alphaFrom="0" alphaTo="1"/>
+			</s:Parallel>
+		</s:showEffect>
+		<s:hideEffect>
+			<s:Fade target="{loaderScreen}" alphaFrom="1" alphaTo="0"/>
+		</s:hideEffect>
+		<s:Rect width="100%" height="100%" radiusX="5" radiusY="5">
+			<s:fill>
+				<s:SolidColor color="#bbbbbb" alpha=".5"/>
+			</s:fill>
+		</s:Rect>
+		<mx:SWFLoader source="@Embed('./assets/loading.swf')" width="100%" height="100%"/>
+	</s:Group>
+
+	<s:transitions>
+		<s:Transition fromState="login" toState="*">
+			<s:Parallel target="{ui}">
+				<s:Resize heightFrom="200" widthFrom="200"/>
+				<s:Fade alphaFrom="0" alphaTo="1"/>
+			</s:Parallel>
+		</s:Transition>
+	</s:transitions>
+	
+	<fx:Script>
+		<![CDATA[
+			import com.swfjunkie.tweetr.data.objects.StatusData;
+			import com.swfjunkie.tweetr.data.objects.UserData;
+			import com.swfjunkie.tweetr.events.TweetEvent;
+			
+			import glitter.skin.ApplicationChromeSkin;
+			
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.events.CloseEvent;
+			import mx.events.ColorPickerEvent;
+			import mx.events.FlexEvent;
+			import mx.validators.ValidationResult;
+
+			private var stateBeforeCollapse:String;
+			[Bindable] private var userData:UserData;
+			
+			
+			protected function initApplication(event:FlexEvent):void
+			{
+				chromeColor.selectedColor = styleManager.getStyleDeclaration('global').getStyle('chromeColor');
+				twitter.init();
+			}
+
+
+			protected function onTwitterReady(event:Event):void
+			{
+				currentState = "timeline";
+				initUserData();
+			}
+			
+			protected function initUserData():void {
+				loading = true;
+				twitter.api.addEventListener(TweetEvent.COMPLETE, onUserData);;
+				twitter.api.getUserDetails(twitter.api.username);
+			}
+			
+			protected function onUserData(event:TweetEvent):void{
+				twitter.api.removeEventListener(TweetEvent.COMPLETE, onUserData);
+				this.userData = event.responseArray[0] as UserData;
+				
+				userImage.source = this.userData .profileImageUrl;
+				userScreenName.text= this.userData .screenName;
+				userName.text = this.userData.name;
+
+				loading= false;
+				getTimeline();
+			}
+
+			protected function getTimeline():void{
+				loading = true;
+				twitter.api.addEventListener(TweetEvent.COMPLETE, onTweetData);
+				twitter.api.getHomeTimeLine();				
+			}
+			
+			protected function getProfile():void{
+				loading = true;
+				twitter.api.addEventListener(TweetEvent.COMPLETE, onTweetData);
+				twitter.api.getUserTimeLine(twitter.api.username);				
+			}
+			
+			protected function onTweetData(e:TweetEvent):void 
+			{
+				loading = false;
+				twitter.api.removeEventListener(TweetEvent.COMPLETE, onTweetData);
+				tweetList.dataProvider = new ArrayCollection(e.responseArray);
+			}
+
+
+			protected function onTweetClick(event:MouseEvent):void
+			{
+				var result:Array = tweetValidator.validate().results;
+				if(result && result[0] && (result[0] as ValidationResult).isError) return ;
+				
+				loading = true
+				var tweet:String = tweetInput.text;
+				twitter.api.addEventListener(TweetEvent.COMPLETE, onTweetSubmitted);
+				twitter.api.updateStatus(tweet);
+				tweetInput.enabled = false;
+			}
+			
+			protected function onTweetSubmitted(e:TweetEvent=null):void 
+			{
+				loading = false;
+				if(tweetList && tweetList.dataProvider){
+					var tweet:StatusData= new StatusData();
+					tweet.user = this.userData;
+					tweet.text = tweetInput.text;
+					tweetList.dataProvider.addItemAt(tweet,0);
+				}
+				tweetInput.text = "";
+				tweetInput.enabled = true;
+			}
+
+
+			protected function changeChromeColor(event:ColorPickerEvent):void
+			{
+				var chromeColorCSS:CSSStyleDeclaration = styleManager.getStyleDeclaration('global');
+				chromeColorCSS.setStyle('chromeColor',chromeColor.selectedColor);
+				styleManager.styleDeclarationsChanged();
+			}
+
+
+			protected function onTwitterError(event:ErrorEvent):void
+			{
+				loading = false;
+				onTweetSubmitted();
+				if(event.text.toLocaleUpperCase().indexOf("OAUTH")>-1){
+					onAuthError();
+				}
+				else{
+					Alert.show(event.text + " Re-authorize?","Twitter Service Error", Alert.YES|Alert.NO,null,
+					function(response:CloseEvent):void {
+						if(response.detail == Alert.YES) onAuthError();
+					});
+				}
+			}
+
+
+			protected function onAuthError(event:ErrorEvent = null):void
+			{
+				loading = false;
+				if(event) loginText.text = event.text;
+				if(currentState != "login"){
+					twitter.clearCache();
+					currentState = "login";
+					twitter.init();
+				}
+			}
+			
+			public function set loading(value:Boolean):void
+			{
+				if(loaderScreen){
+					loaderScreen.visible = value;
+					tweetButton.enabled = !value;
+					profileButton.enabled = !value;
+					timelineButton.enabled = !value;
+				}
+			}
+			
+			public function get loading():Boolean
+			{
+				return loaderScreen && loaderScreen.visible;
+			}
+
+		]]>
+	</fx:Script>
+</s:WindowedApplication>
