@@ -17,8 +17,8 @@ package glitter
 	[Event(name="authError", type="flash.events.ErrorEvent")]
 	public class Twitter extends EventDispatcher
 	{
-		private static const CONSUMER_KEY:String = "WsXQ4jpKZhHV05xUCE0w";
-		private static const CONSUMER_SECRET:String = "JVLbWUCgh6Rxck3xOc8ZNMGPMD9ATuYqZYcHS7ourUs";
+		private static const CONSUMER_KEY:String = "TWITTER CONSUMER KEY HERE";
+		private static const CONSUMER_SECRET:String = "TWITTER CONSUMER SECRET HERE";
 		
 		private var tweetr: Tweetr
 		private var oauth:OAuth;
